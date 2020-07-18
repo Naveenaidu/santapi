@@ -21,6 +21,7 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.ToRow
 import Database.PostgreSQL.Simple.FromRow
 import Database.PostgreSQL.Simple.ToField
+import Database.PostgreSQL.Simple.SqlQQ (sql)
 
 
 data Present = Present  { presentName :: Text
@@ -58,6 +59,9 @@ instance ToRow Location where
 instance FromRow Child where
   fromRow = Child <$> field <*> field <*> liftM2 Location field field <*> liftM2 Present field field
 
+---------------------------------------------------------------------------------------------
+-- DB querying
+
 getLocation :: Int -> ReaderT Connection IO [Location]
 getLocation id = do
   conn <- ask 
@@ -75,6 +79,24 @@ getChild id = do
   conn <- ask
   child <- lift (query conn "SELECT * FROM child_info WHERE id = ?" (Only (id :: Int)) :: IO [Child])
   return child
+
+fetchAllLocations :: ReaderT Connection IO [Location]
+fetchAllLocations = do
+  conn <- ask
+  locations <- lift (query_ conn "SELECT latitude,longitude FROM location ORDER BY id")
+  return locations
+
+fetchAllPresents :: ReaderT Connection IO [Present]
+fetchAllPresents = do
+  conn <- ask
+  presents <- lift (query_ conn "SELECT name, info FROM present ORDER BY id")
+  return presents
+
+fetchAllChildren :: ReaderT Connection IO [Child]
+fetchAllChildren = do
+  conn <- ask
+  children <- lift (query_ conn "SELECT * FROM child_info")
+  return children
 
 -- main :: IO ()
 -- main = do
@@ -110,10 +132,7 @@ instance FromJSON Present
 instance ToJSON Child
 instance FromJSON Child
 
-instance Show Location where
-  show (Location lat long) = 
-    "Location {locLat= (" ++  show (fromRational lat :: Double) ++ ") , locLong =(" 
-    ++ show (fromRational long :: Double) ++ ")}"
+
 
 -- SpockM conn0 sess0 st0 ()
 -- conn = DB connection type
@@ -123,16 +142,26 @@ instance Show Location where
 type Api = SpockM Connection () () ()
 type ApiAction a = SpockAction Connection () () a
 
+
 app :: Api
 app = do
-  get "present" $ do
-    json $ Present {presentName = "Telescope", presentInfo = "Super magnified telescope"}
 
-  get "location" $ do
-    json $ Location {locLat= (42.5462) , locLong =(-61.7879)}
+  -- GET ROUTES
+  get "presents" $ do
+    presents <- runQuery $ (\conn -> runReaderT fetchAllPresents conn )
+    json $ presents
 
-  get "child" $ do
-    json $ Child {childName = "Koro Sensei", childNaughty = 25, childLocation = Location {locLat = (-162897) % 10000, locLong = 456721 % 10000}, childPresent = Present {presentName = "Toy Train", presentInfo = "Cheap ass toy train, Ran out of budget"}}
+  get "locations" $ do
+    locations <- runQuery $ (\conn -> runReaderT fetchAllLocations conn )
+    json $ locations
+
+  get "children" $ do
+    children <- runQuery $ (\conn -> runReaderT fetchAllChildren conn )
+    json $ children
+
+  -- Get elements with particular id
+  get ("present" <//> id) $\presentID -> do
+
 
   post "present" $ do
     thePresent <- jsonBody' :: ApiAction Present
