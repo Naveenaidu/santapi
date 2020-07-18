@@ -42,6 +42,9 @@ data Child = Child  { childName :: Text
 instance FromRow Present where
   fromRow = Present <$> field <*> field
 
+instance ToRow Present where
+  toRow p = [toField (presentName p), toField (presentInfo p)]
+
 instance FromRow Location where
   fromRow = Location <$> field <*> field
 
@@ -196,13 +199,13 @@ app = do
       otherwise -> json maybeChild
 
 
-  post "present" $ do
-    thePresent <- jsonBody' :: ApiAction Present
-    text $ "Parsed: " <> pack (show thePresent)
-
-  post "location" $ do
-    theLocation <- jsonBody' :: ApiAction Location
-    text $ "Parsed: " <> pack (show theLocation)
+  post "addPresent" $ do
+    maybePresent <- jsonBody :: ApiAction (Maybe Present)
+    case maybePresent of
+      Nothing -> errorJson 1 "Failed to parse request body of Present"
+      Just thePresent -> do
+        newId <- runQuery $ \conn -> execute conn "INSERT into present (name, info) values (?,?)" (toRow thePresent)
+        json $ object ["result" .= String "success"]
 
   post "child" $ do
     theChild <- jsonBody' :: ApiAction Child
