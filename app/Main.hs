@@ -59,6 +59,10 @@ instance ToRow Location where
 instance FromRow Child where
   fromRow = Child <$> field <*> field <*> liftM2 Location field field <*> liftM2 Present field field
 
+instance Show Location where
+  show (Location lat long) = 
+    "Location {locLat= (" ++  show (fromRational lat :: Double) ++ ") , locLong =(" 
+    ++ show (fromRational long :: Double) ++ ")}"
 ---------------------------------------------------------------------------------------------
 -- DB querying
 
@@ -132,7 +136,14 @@ instance FromJSON Present
 instance ToJSON Child
 instance FromJSON Child
 
-
+-- Error Message
+errorJson :: Int -> Text -> ApiAction ()
+errorJson code message =
+  json $
+    object
+    [ "result" .= String "failure"
+    , "error" .= object ["code" .= code, "message" .= message]
+    ]
 
 -- SpockM conn0 sess0 st0 ()
 -- conn = DB connection type
@@ -160,7 +171,7 @@ app = do
     json $ children
 
   -- Get elements with particular id
-  get ("present" <//> id) $\presentID -> do
+  -- get ("present" <//> id) $\presentID -> do
 
 
   post "present" $ do
