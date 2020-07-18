@@ -93,7 +93,7 @@ fetchAllLocations = do
 fetchAllPresents :: ReaderT Connection IO [Present]
 fetchAllPresents = do
   conn <- ask
-  presents <- lift (query_ conn "SELECT name, info FROM present ORDER BY id")
+  presents <- lift (query_ conn "SELECT name, info FROM present ORDER BY id" :: IO [Present])
   return presents
 
 fetchAllChildren :: ReaderT Connection IO [Child]
@@ -159,19 +159,41 @@ app = do
 
   -- GET ROUTES
   get "presents" $ do
-    presents <- runQuery $ (\conn -> runReaderT fetchAllPresents conn )
-    json $ presents
-
+    maybePresents <- runQuery $ \conn -> runReaderT fetchAllPresents conn
+    case maybePresents of
+      [] -> errorJson 1 "Could not find any Present"
+      otherwise -> json maybePresents
+      
   get "locations" $ do
-    locations <- runQuery $ (\conn -> runReaderT fetchAllLocations conn )
-    json $ locations
+    maybeLocations <- runQuery $ (\conn -> runReaderT fetchAllLocations conn)
+    case maybeLocations of
+      [] -> errorJson 1 " Could not find any Locations"
+      otherwise -> json $ maybeLocations
 
   get "children" $ do
-    children <- runQuery $ (\conn -> runReaderT fetchAllChildren conn )
-    json $ children
+    maybeChildren <- runQuery $ (\conn -> runReaderT fetchAllChildren conn)
+    case maybeChildren of
+      [] -> errorJson 1 " Could not find any Children"
+      otherwise -> json $ maybeChildren
 
   -- Get elements with particular id
-  -- get ("present" <//> id) $\presentID -> do
+  get ("present" <//> var) $ \presentID -> do
+    maybePresent <- runQuery $ \conn -> runReaderT (getPresent presentID) conn
+    case maybePresent of
+      [] -> errorJson 1 "Could not find any Present with matching id"
+      otherwise -> json maybePresent
+
+  get ("location" <//> var) $ \locationID -> do
+    maybeLoaction <- runQuery $ \conn -> runReaderT (getLocation locationID) conn
+    case maybeLoaction of
+      [] -> errorJson 1 "Could not find any location with matching id"
+      otherwise -> json maybeLoaction
+
+  get ("child" <//> var) $ \childID -> do
+    maybeChild <- runQuery $ \conn -> runReaderT (getChild childID) conn
+    case maybeChild of
+      [] -> errorJson 1 "Could not find any child with matching id"
+      otherwise -> json maybeChild
 
 
   post "present" $ do
