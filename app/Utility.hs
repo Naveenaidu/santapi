@@ -1,4 +1,4 @@
-Utility functions
+--Utility functions
 getLocation :: Int -> Connection -> IO [Location] 
 getLocation id conn = do
   location <- (query conn "SELECT latitude, longitude FROM location WHERE id = ?" (Only (id :: Int)) :: IO [Location])

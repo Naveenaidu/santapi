@@ -50,6 +50,8 @@ executable Database-conn-exe
     , text
     , aeson
     , Spock
+    , mtl
+    , resource-pool
   default-language: Haskell2010
 
 test-suite Database-conn-test
