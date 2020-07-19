@@ -53,12 +53,6 @@ instance ToRow Location where
             , toField ( fromRational (locLong l) :: Double )
             ]
 
-
--- FIXME: How will we update/insert the child value into DB
--- We'll ask for location id and present id, check in the code if the location/present exist
--- If no then display error else send the value
-
--- Maybe we might have to create a new Child' datatype for POST request
 instance FromRow Child where
   fromRow = Child <$> field <*> field <*> liftM2 Location field field <*> liftM2 Present field field
 
@@ -66,6 +60,18 @@ instance Show Location where
   show (Location lat long) = 
     "Location {locLat= (" ++  show (fromRational lat :: Double) ++ ") , locLong =(" 
     ++ show (fromRational long :: Double) ++ ")}"
+
+-- JSON instances for the datatypes to convert between haskell datatype and JSON
+instance ToJSON Location where
+  toJSON (Location lat long) = object ["locLat" .= (fromRational lat :: Double),
+                                       "locLong" .= (fromRational long :: Double) ]
+instance FromJSON Location
+
+instance ToJSON Present
+instance FromJSON Present
+
+instance ToJSON Child
+instance FromJSON Child
 ---------------------------------------------------------------------------------------------
 -- DB querying
 
@@ -105,39 +111,9 @@ fetchAllChildren = do
   children <- lift (query_ conn "SELECT * FROM child_info")
   return children
 
--- main :: IO ()
--- main = do
---   conn <-
---     connect
---       defaultConnectInfo
---       { connectHost = "localhost"
---       , connectDatabase = "christmas"
---       , connectUser = "postgres"
---       , connectPassword = "admin"
---       }
---   mapM_ print =<< (query_ conn "SELECT name, info FROM present" :: IO [Present])
---   mapM_ print =<< (query_ conn "SELECT latitude, longitude FROM location" :: IO [Location])
---   mapM_ print =<< (query_ conn "SELECT * FROM child_info" :: IO [Child])
---   mapM_ print =<< runReaderT (getLocation 1) conn
---   execute conn "INSERT into location (latitude, longitude) values (?,?)" ((123.32 :: Double), (142.23 :: Double))
---   execute conn 
---     "INSERT into child (name,naughty,location_id,present_id) values (?,?,?,?)"
---     (("Harry" :: Text), (35 :: Int), (3 :: Int), (2 :: Int))
-
 -----------------------------------------------------------------------------------------------------
 -- Server Implementation --
 
--- Custom JSON String for Location
-instance ToJSON Location where
-  toJSON (Location lat long) = object ["locLat" .= (fromRational lat :: Double),
-                                       "locLong" .= (fromRational long :: Double) ]
-instance FromJSON Location
-
-instance ToJSON Present
-instance FromJSON Present
-
-instance ToJSON Child
-instance FromJSON Child
 
 -- Error Message
 errorJson :: Int -> Text -> ApiAction ()
@@ -198,6 +174,7 @@ app = do
       [] -> errorJson 1 "Could not find any child with matching id"
       otherwise -> json maybeChild
 
+  -- POST routes
   post "addPresent" $ do
     maybePresent <- jsonBody :: ApiAction (Maybe Present)
     case maybePresent of
@@ -211,12 +188,10 @@ app = do
     case maybeLocation of
       Nothing -> errorJson 1 "Failed to parse request body of Location"
       Just theLocation -> do
-        runQuery $ \conn -> execute conn "INSERT into location (latitude, location) values (?,?)" (toRow theLocation)
+        runQuery $ \conn -> execute conn "INSERT into location (latitude, longitude) values (?,?)" (toRow theLocation)
         json $ object ["result" .= String "success"]
   
-  post "child" $ do
-    theChild <- jsonBody' :: ApiAction Child
-    text $ "Parsed: " <> pack (show theChild)
+  -- TODO: Implement a POST request for Child table
 
 connectDB :: IO Connection
 connectDB =
@@ -234,7 +209,3 @@ main = do
   pool <- createPool connectDB close 1 10 10
   spockCfg <- defaultSpockCfg () (PCPool pool) ()
   runSpock 8080 (spock spockCfg app)
-
-
-
-
