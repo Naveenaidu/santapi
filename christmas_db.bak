@@ -1,0 +1,274 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.2 (Ubuntu 12.2-4)
+-- Dumped by pg_dump version 12.2 (Ubuntu 12.2-4)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: child; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.child (
+    id integer NOT NULL,
+    name character varying(50) NOT NULL,
+    naughty smallint,
+    location_id integer,
+    present_id integer
+);
+
+
+ALTER TABLE public.child OWNER TO postgres;
+
+--
+-- Name: child_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.child_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.child_id_seq OWNER TO postgres;
+
+--
+-- Name: child_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.child_id_seq OWNED BY public.child.id;
+
+
+--
+-- Name: location; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.location (
+    id integer NOT NULL,
+    latitude numeric(10,5) NOT NULL,
+    longitude numeric(10,5) NOT NULL
+);
+
+
+ALTER TABLE public.location OWNER TO postgres;
+
+--
+-- Name: present; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.present (
+    id integer NOT NULL,
+    name character varying(50) NOT NULL,
+    info text NOT NULL
+);
+
+
+ALTER TABLE public.present OWNER TO postgres;
+
+--
+-- Name: child_info; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.child_info AS
+ SELECT c.name AS child_name,
+    c.naughty,
+    l.latitude,
+    l.longitude,
+    p.name AS present_name,
+    p.info
+   FROM ((public.child c
+     LEFT JOIN public.location l ON ((c.location_id = l.id)))
+     LEFT JOIN public.present p ON ((p.id = c.present_id)));
+
+
+ALTER TABLE public.child_info OWNER TO postgres;
+
+--
+-- Name: location_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.location_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.location_id_seq OWNER TO postgres;
+
+--
+-- Name: location_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.location_id_seq OWNED BY public.location.id;
+
+
+--
+-- Name: present_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.present_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.present_id_seq OWNER TO postgres;
+
+--
+-- Name: present_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.present_id_seq OWNED BY public.present.id;
+
+
+--
+-- Name: child id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.child ALTER COLUMN id SET DEFAULT nextval('public.child_id_seq'::regclass);
+
+
+--
+-- Name: location id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.location ALTER COLUMN id SET DEFAULT nextval('public.location_id_seq'::regclass);
+
+
+--
+-- Name: present id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.present ALTER COLUMN id SET DEFAULT nextval('public.present_id_seq'::regclass);
+
+
+--
+-- Data for Name: child; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.child (id, name, naughty, location_id, present_id) FROM stdin;
+1	Elend Venture	10	3	1
+2	Vin Misty	80	1	3
+3	Donald Trump	100	2	2
+4	Koro Sensei	25	4	4
+5	Harry	35	3	2
+\.
+
+
+--
+-- Data for Name: location; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.location (id, latitude, longitude) FROM stdin;
+1	42.54620	-61.78790
+2	35.23400	114.72530
+3	45.21310	908.39120
+4	-16.28970	45.67210
+5	123.32000	142.23000
+6	87.32000	-16.34000
+\.
+
+
+--
+-- Data for Name: present; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.present (id, name, info) FROM stdin;
+1	Bike	A GTX sports bike limited edition
+2	PS4	Last of us Mega Edition
+3	Telescope	Super magnified telescope
+4	Toy Train	Cheap ass toy train, Ran out of budget
+5	PS5	Collector Edition
+6	Radio	HamRadio set
+\.
+
+
+--
+-- Name: child_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.child_id_seq', 5, true);
+
+
+--
+-- Name: location_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.location_id_seq', 6, true);
+
+
+--
+-- Name: present_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.present_id_seq', 6, true);
+
+
+--
+-- Name: child child_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.child
+    ADD CONSTRAINT child_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: location location_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.location
+    ADD CONSTRAINT location_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: present present_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.present
+    ADD CONSTRAINT present_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: child child_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.child
+    ADD CONSTRAINT child_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.location(id);
+
+
+--
+-- Name: child child_present_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.child
+    ADD CONSTRAINT child_present_id_fkey FOREIGN KEY (present_id) REFERENCES public.present(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
