@@ -170,11 +170,7 @@ app = do
       [] -> errorJson 1 "Could not find any location with matching id"
       otherwise -> json maybeLoaction
 
-  get ("child" <//> var) $ \childID -> do
-    maybeChild <- runQuery $ \conn -> runReaderT (getChild childID) conn
-    case maybeChild of
-      [] -> errorJson 1 "Could not find any child with matching id"
-      otherwise -> json maybeChild
+  -- TODO: Implement a GET request for Child with particular id
 
   -- POST routes
   post "addPresent" $ do
