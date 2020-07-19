@@ -109,7 +109,9 @@ Once the app is built, you will be able to access it at `http://localhost:8080/`
 ### Fetch All Locations
 
 _Endpoint_: http://localhost:8080/locations
+
 _Output_:
+
 ```json
 [
   {
@@ -124,15 +126,16 @@ _Output_:
     "locLong": 908.3912,
     "locLat": 45.2131
   },
- ...
- ...
+
 ]
 ```
 
 ### Fetch All Presents
 
 _Endpoint_: http://localhost:8080/presents
+
 _Output_:
+
 ```json
 [
   {
@@ -147,15 +150,16 @@ _Output_:
     "presentName": "Toy Train",
     "presentInfo": "Cheap ass toy train, Ran out of budget"
   }
- ...
- ...
+
 ]
 ```
 
 ### Fetch All Children
 
 _Endpoint_: http://localhost:8080/children
+
 _Output_:
+
 ```json
 [
  {
@@ -182,8 +186,7 @@ _Output_:
       "presentInfo": "Super magnified telescope"
     }
   },
- ...
- ...
+
 ]
 ```
 
