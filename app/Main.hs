@@ -54,14 +54,16 @@ instance ToRow Location where
             ]
 
 instance FromRow Child where
-  fromRow = Child <$> field <*> field <*> liftM2 Location field field <*> liftM2 Present field field
+  fromRow = Child <$> field <*> field 
+            <*> liftM2 Location field field 
+            <*> liftM2 Present field field
 
 instance Show Location where
   show (Location lat long) = 
     "Location {locLat= (" ++  show (fromRational lat :: Double) ++ ") , locLong =(" 
     ++ show (fromRational long :: Double) ++ ")}"
 
--- JSON instances for the datatypes to convert between haskell datatype and JSON
+-- Instances to convert between haskell datatype and JSON object
 instance ToJSON Location where
   toJSON (Location lat long) = object ["locLat" .= (fromRational lat :: Double),
                                        "locLong" .= (fromRational long :: Double) ]
@@ -75,40 +77,40 @@ instance FromJSON Child
 ---------------------------------------------------------------------------------------------
 -- DB querying
 
-getLocation :: Int -> ReaderT Connection IO [Location]
+getLocation ::(MonadReader Connection m, MonadIO m) => Int -> m [Location]
 getLocation id = do
   conn <- ask 
-  location <- lift (query conn "SELECT latitude, longitude FROM location WHERE id = ?" (Only (id :: Int)) :: IO [Location])
+  location <- liftIO (query conn "SELECT latitude, longitude FROM location WHERE id = ?" (Only (id :: Int)) :: IO [Location])
   return (location)
 
-getPresent :: Int -> ReaderT Connection IO [Present]
+getPresent :: (MonadReader Connection m, MonadIO m) => Int -> m [Present]
 getPresent id = do
   conn <- ask
-  present <- lift (query conn "SELECT name, info FROM present WHERE id = ?" (Only (id :: Int)) :: IO [Present])
+  present <- liftIO (query conn "SELECT name, info FROM present WHERE id = ?" (Only (id :: Int)) :: IO [Present])
   return present
 
-getChild :: Int -> ReaderT Connection IO [Child]
+getChild :: (MonadReader Connection m, MonadIO m) => Int -> m [Child]
 getChild id = do
   conn <- ask
-  child <- lift (query conn "SELECT * FROM child_info WHERE id = ?" (Only (id :: Int)) :: IO [Child])
+  child <- liftIO (query conn "SELECT * FROM child_info WHERE id = ?" (Only (id :: Int)) :: IO [Child])
   return child
 
-fetchAllLocations :: ReaderT Connection IO [Location]
+fetchAllLocations :: (MonadReader Connection m, MonadIO m) => m [Location]
 fetchAllLocations = do
   conn <- ask
-  locations <- lift (query_ conn "SELECT latitude,longitude FROM location ORDER BY id")
+  locations <- liftIO (query_ conn "SELECT latitude,longitude FROM location ORDER BY id")
   return locations
 
-fetchAllPresents :: ReaderT Connection IO [Present]
+fetchAllPresents :: (MonadReader Connection m, MonadIO m) => m [Present]
 fetchAllPresents = do
   conn <- ask
-  presents <- lift (query_ conn "SELECT name, info FROM present ORDER BY id" :: IO [Present])
+  presents <- liftIO (query_ conn "SELECT name, info FROM present ORDER BY id" :: IO [Present])
   return presents
 
-fetchAllChildren :: ReaderT Connection IO [Child]
+fetchAllChildren :: (MonadReader Connection m, MonadIO m) => m [Child]
 fetchAllChildren = do
   conn <- ask
-  children <- lift (query_ conn "SELECT * FROM child_info")
+  children <- liftIO (query_ conn "SELECT * FROM child_info")
   return children
 
 -----------------------------------------------------------------------------------------------------
