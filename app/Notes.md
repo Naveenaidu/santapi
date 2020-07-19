@@ -52,3 +52,17 @@ Maybe we might have to create a new Child' datatype for POST request\
 curl -H "Content-Type: application/json" -d '{"presentName": "Radio", "presentInf": "HamRadio set"}' localhost:8080/addPresent 
 
 curl -H "Content-Type: application/json" -d '{"locLat": 87.32, "locLong": -16.34}' localhost:8080/addLocation
+
+## References
+-------------
+https://translate.google.com/translate?hl=en&sl=de&u=https://stackoverrun.com/de/q/11669883&prev=search&pto=aue
+
+https://www.lambda-land.com/posts/2017-11-16-postgresql-simple
+
+https://github.com/xor-xor/webapp-spock/blob/master/src/App.hs
+
+https://chrispenner.ca/posts/monadio-considered-harmful
+
+https://www3.ntu.edu.sg/home/ehchua/programming/sql/PostgreSQL_GetStarted.html
+
+https://www.spock.li/tutorials/rest-api
