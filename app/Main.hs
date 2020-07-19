@@ -198,15 +198,22 @@ app = do
       [] -> errorJson 1 "Could not find any child with matching id"
       otherwise -> json maybeChild
 
-
   post "addPresent" $ do
     maybePresent <- jsonBody :: ApiAction (Maybe Present)
     case maybePresent of
       Nothing -> errorJson 1 "Failed to parse request body of Present"
       Just thePresent -> do
-        newId <- runQuery $ \conn -> execute conn "INSERT into present (name, info) values (?,?)" (toRow thePresent)
+        runQuery $ \conn -> execute conn "INSERT into present (name, info) values (?,?)" (toRow thePresent)
         json $ object ["result" .= String "success"]
 
+  post "addLocation" $ do
+    maybeLocation <- jsonBody :: ApiAction (Maybe Location)
+    case maybeLocation of
+      Nothing -> errorJson 1 "Failed to parse request body of Location"
+      Just theLocation -> do
+        runQuery $ \conn -> execute conn "INSERT into location (latitude, location) values (?,?)" (toRow theLocation)
+        json $ object ["result" .= String "success"]
+  
   post "child" $ do
     theChild <- jsonBody' :: ApiAction Child
     text $ "Parsed: " <> pack (show theChild)

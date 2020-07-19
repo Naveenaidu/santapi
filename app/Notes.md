@@ -43,7 +43,3 @@ db_name=# \d <table_name>
 -- You can read ReaderT Connection IO [Location] as m a where m == ReaderT Connection IO and a == IO [Location]
 -- So we can use `lift` to apply the Transformer type(ReaderT Connection) to IO [Location]
 
-instance Show Location where
-  show (Location lat long) = 
-    "Location {locLat= (" ++  show (fromRational lat :: Double) ++ ") , locLong =(" 
-    ++ show (fromRational long :: Double) ++ ")}"
