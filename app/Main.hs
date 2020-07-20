@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE DeriveAnyClass    #-}
 
 module Main where
 
@@ -26,27 +27,17 @@ import Database.PostgreSQL.Simple.SqlQQ (sql)
 
 data Present = Present  { presentName :: Text
                         , presentInfo :: Text
-                        } deriving (Generic, Show)
+                        } deriving (Generic, Show, ToRow, FromRow, ToJSON, FromJSON)
 
 data Location = Location  { locLat :: Rational
                           , locLong :: Rational
-                          } deriving (Generic)
+                          } deriving (Generic, FromRow, FromJSON)
 
 data Child = Child  { childName :: Text
                     , childNaughty :: Int
                     , childLocation :: Location
                     , childPresent :: Present 
-                    } deriving (Generic, Show)
-
--- Instances to convert between postgresql and haskell datatypes
-instance FromRow Present where
-  fromRow = Present <$> field <*> field
-
-instance ToRow Present where
-  toRow p = [toField (presentName p), toField (presentInfo p)]
-
-instance FromRow Location where
-  fromRow = Location <$> field <*> field
+                    } deriving (Generic, Show, ToJSON, FromJSON)
 
 instance ToRow Location where
   toRow l = [ toField (fromRational (locLat l) :: Double )
@@ -67,32 +58,26 @@ instance Show Location where
 instance ToJSON Location where
   toJSON (Location lat long) = object ["locLat" .= (fromRational lat :: Double),
                                        "locLong" .= (fromRational long :: Double) ]
-instance FromJSON Location
 
-instance ToJSON Present
-instance FromJSON Present
-
-instance ToJSON Child
-instance FromJSON Child
 ---------------------------------------------------------------------------------------------
 -- DB querying
 
 getLocation ::(MonadReader Connection m, MonadIO m) => Int -> m [Location]
 getLocation id = do
   conn <- ask 
-  location <- liftIO (query conn "SELECT latitude, longitude FROM location WHERE id = ?" (Only (id :: Int)) :: IO [Location])
+  location <- liftIO (query conn "SELECT latitude, longitude FROM location WHERE id = ?" (Only (id :: Int)) )
   return (location)
 
 getPresent :: (MonadReader Connection m, MonadIO m) => Int -> m [Present]
 getPresent id = do
   conn <- ask
-  present <- liftIO (query conn "SELECT name, info FROM present WHERE id = ?" (Only (id :: Int)) :: IO [Present])
+  present <- liftIO (query conn "SELECT name, info FROM present WHERE id = ?" (Only (id :: Int)) )
   return present
 
 getChild :: (MonadReader Connection m, MonadIO m) => Int -> m [Child]
 getChild id = do
   conn <- ask
-  child <- liftIO (query conn "SELECT * FROM child_info WHERE id = ?" (Only (id :: Int)) :: IO [Child])
+  child <- liftIO (query conn "SELECT * FROM child_info WHERE id = ?" (Only (id :: Int)) )
   return child
 
 fetchAllLocations :: (MonadReader Connection m, MonadIO m) => m [Location]
@@ -104,7 +89,7 @@ fetchAllLocations = do
 fetchAllPresents :: (MonadReader Connection m, MonadIO m) => m [Present]
 fetchAllPresents = do
   conn <- ask
-  presents <- liftIO (query_ conn "SELECT name, info FROM present ORDER BY id" :: IO [Present])
+  presents <- liftIO (query_ conn "SELECT name, info FROM present ORDER BY id" )
   return presents
 
 fetchAllChildren :: (MonadReader Connection m, MonadIO m) => m [Child]
